@@ -26,8 +26,8 @@ For details on what BASS functions are implemented at the moment, plese refer to
 		- ✗ ref-struct (^1.1.0) replaced with: ✓ ref-struct-napi (1.1.1)
 	
 	- Updated the two dependendencies below
-		✓ chalk (4.0.0, required ^1.1.3)
-		✓ replace-in-file (6.0.0, required ^2.5.0)
+		- ✓ chalk (4.0.0, required ^1.1.3)
+		- ✓ replace-in-file (6.0.0, required ^2.5.0)
 	
 	- Cleaned the original .gitignore
 	
