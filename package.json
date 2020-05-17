@@ -1,0 +1,28 @@
+{
+  "name": "bassaudiolibrary",
+  "version": "0.9.1",
+  "description": "Node.js wrapper for Un4Seen BASS Audio Library",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RiccardoBiemmi/bassaudiolibrary.git"
+  },
+  "keywords": [
+    "bass",
+    "audio",
+    "library",
+	"node.js",
+	"wrapper"
+  ],
+  "author": "Riccardo Biemmi",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "4.0.0",
+    "ffi-napi": "2.5.0",
+    "ref-napi": "2.0.0",
+    "ref-array-napi": "1.2.1",
+    "ref-struct-napi": "1.1.1",
+    "replace-in-file": "6.0.0"
+  }
+}
