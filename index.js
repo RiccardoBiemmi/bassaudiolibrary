@@ -7,10 +7,6 @@ try {
 }
 
 var path = require('path');
-//var Struct = require('ref-struct');
-//var ref = require('ref');
-//var ffi = require('ffi');
-
 var Struct = require('ref-struct-napi');
 var ref = require('ref-napi');
 var ffi = require('ffi-napi');
@@ -401,11 +397,6 @@ function Bass(options) {
         BASS_ENCODE_DITHER: 0x8000,	// apply dither when converting floating-point sample data to integer
         BASS_ENCODE_AUTOFREE: 0x40000 // free the encoder when the channel is freed
     }
-    this.BASS_Encode_CastInitcontentMIMEtypes = {
-        BASS_ENCODE_TYPE_MP3: "audio/mpeg",
-        BASS_ENCODE_TYPE_OGG: "application/ogg",
-        BASS_ENCODE_TYPE_AAC: "audio/aacp"
-    }
 
     this.SYNCPROC = this.ffi.Callback('void', ['int', 'int', 'int', ref.types.void], function (handle, channel, data, user) {
         console.log('syncproc is called')
@@ -424,33 +415,17 @@ function Bass(options) {
     var infoPTR = ref.refType(this.BASS_INFO);
 
     var basslibName = '';
-    var bassmixlibName = '';
-    var bassenclibName = '';
     if (process.platform == 'win32') {
         basslibName = 'bass.dll';
-        bassmixlibName = 'bassmix.dll';
-        bassenclibName = 'bassenc.dll';
     }
     else if (process.platform == 'darwin') {
         basslibName = 'libbass.dylib';
-        bassmixlibName = 'libbassmix.dylib';
-        bassenclibName = 'libbassenc.dylib';
     }
     else if (process.platform == 'linux') {
         basslibName = 'libbass.so';
-        bassmixlibName = 'libbassmix.so';
-        bassenclibName = 'libbassenc.so';
     }
     basslibName = path.join(options.basePath, basslibName);
-    bassmixlibName = path.join(options.basePath, bassmixlibName);
-    bassenclibName = path.join(options.basePath, bassenclibName);
-    this.bassenclibName = bassenclibName;
-    this.bassmixlibName = bassmixlibName;
 
-    this.basslibmixer = null;
-    this.basslibencoder = null;
-
-//    this.ArrayType = require('ref-array')
     this.ArrayType = require('ref-array-napi')
 
     this.basslib = this.ffi.Library(basslibName, {
@@ -495,9 +470,6 @@ function Bass(options) {
         BASS_Update:['bool',['int']],
         BASS_ChannelUpdate:['bool',['int','int']]
     });
-
-    // mixer_streamCreate, mixer_streamADdChannel,
-    //bass_encode_start, bass_Encode_castinit, encode_stop, isActive,CastSetTitle
 
     EventEmitter.call(this);
 }
@@ -749,163 +721,6 @@ Bass.prototype.BASS_ChannelGetTags = function (handle, tags) {
     }
 
     return t;
-}
-
-//----------------------- Split Functions -----------------------------
-Bass.prototype.BASS_Split_StreamCreate=function(handle,flags){
-    var myArr=this.ArrayType(this.ref.types.int)
-    var arr=new myArr(3)
-    arr[0]=1
-    arr[1]=0
-    arr[2]=-1
-    var buff=new Buffer(arr)
-    var q= this.basslibmixer.BASS_Split_StreamCreate(handle,flags,null)
-    return q
-}
-Bass.prototype.BASS_Split_StreamGetAvailable=function(handle){
-    return this.basslibmixer.BASS_Split_StreamGetAvailable(handle)
-}
-Bass.prototype.BASS_Split_StreamGetSource=function(handle){
-    return this.basslibmixer.BASS_Split_StreamGetSource(handle)
-}
-Bass.prototype.BASS_Split_StreamGetSplits=function(handle,count){
-    var myArr=this.ArrayType(this.ref.types.int)
-    var buff=new Buffer(myArr)
-    var q= this.basslibmixer.BASS_Split_StreamGetSplits(handle,buff,count)
-    var arr = Array.prototype.slice.call(buff, 0)
-    return arr;
-}
-Bass.prototype.BASS_Split_StreamReset=function(handle){
-    return this.basslibmixer.BASS_Split_StreamReset(handle)
-}
-Bass.prototype.BASS_Split_StreamResetEx=function(handle,offset){
-    return this.basslibmixer.BASS_Split_StreamResetEx(handle,offset)
-}
-//----------------------- /Split Functions -----------------------------
-
-Bass.prototype.BASS_Mixer_StreamCreate = function (freq, chans, flags) {
-    return this.basslibmixer.BASS_Mixer_StreamCreate(freq, chans, flags);
-}
-
-Bass.prototype.BASS_Mixer_ChannelGetLevel = function (handle) {
-    return this.basslibmixer.BASS_Mixer_ChannelGetLevel(handle);
-}
-
-Bass.prototype.BASS_Mixer_StreamAddChannel = function (handle, chans, flags) {
-    return this.basslibmixer.BASS_Mixer_StreamAddChannel(handle, chans, flags);
-}
-
-Bass.prototype.BASS_Mixer_ChannelGetMixer = function (handle) {
-    return this.basslibmixer.BASS_Mixer_ChannelGetMixer(handle);
-}
-
-Bass.prototype.BASS_Mixer_ChannelGetPosition = function (handle, mode) {
-    return this.basslibmixer.BASS_Mixer_ChannelGetPosition(handle, mode);
-}
-
-Bass.prototype.BASS_Mixer_ChannelRemove = function (handle) {
-    return this.basslibmixer.BASS_Mixer_ChannelRemove(handle);
-}
-
-Bass.prototype.BASS_Mixer_ChannelRemoveSync = function (handle, synchandle) {
-    return this.basslibmixer.BASS_Mixer_ChannelRemoveSync(handle, synchandle);
-}
-
-Bass.prototype.BASS_Mixer_ChannelSetPosition = function (handle, pos, mode) {
-    return this.basslibmixer.BASS_Mixer_ChannelSetPosition(handle, pos, mode);
-}
-
-Bass.prototype.BASS_Mixer_ChannelSetSync = function (handle, type, param, callback) {
-    return this.basslibmixer.BASS_Mixer_ChannelSetSync(handle, type, param, this.ffi.Callback('void', ['int', 'int', 'int', this.ref.types.void], callback), null);
-}
-
-Bass.prototype.MixerEnabled = function () {
-    return this.basslibmixer == null ? false : true;
-}
-
-Bass.prototype.EnableMixer = function (value) {
-    if (value) {
-        this.basslibmixer = this.ffi.Library(this.bassmixlibName, {
-            BASS_Mixer_StreamCreate: ['int', ['int', 'int', 'int']],
-            BASS_Mixer_StreamAddChannel: ['bool', ['int', 'int', 'int']],
-            BASS_Mixer_ChannelGetLevel: ['int', ['int']],
-            BASS_Mixer_ChannelGetMixer: ['int', ['int']],
-            BASS_Mixer_ChannelGetPosition: [ref.types.int64, ['int', 'int']],
-            BASS_Mixer_ChannelRemove: ['bool', ['int']],
-            BASS_Mixer_ChannelRemoveSync: ['bool', ['int', 'int']],
-            BASS_Mixer_ChannelSetPosition: ['bool', ['int', ref.types.int64, 'int']],
-            BASS_Mixer_ChannelSetSync: ['int', ['int', 'int', ref.types.int64, 'pointer', this.ref.types.void]],
-            BASS_Split_StreamCreate:['int',['int','int','pointer']],
-            BASS_Split_StreamGetAvailable:['int',['int']],
-            BASS_Split_StreamGetSource:['int',['int']],
-            BASS_Split_StreamReset:['bool',['int']],
-            BASS_Split_StreamResetEx:['bool',['int','int']],
-            BASS_Split_StreamGetSplits:['int',['int','pointer','int']]
-        });
-    } else {
-        this.basslibmixer = null;
-    }
-}
-
-Bass.prototype.EncoderEnabled = function () {
-    return this.basslibencoder == null ? false : true;
-}
-
-Bass.prototype.EnableEncoder = function (value) {
-    if (value) {
-        this.basslibencoder = this.ffi.Library(this.bassenclibName, {
-            BASS_Encode_Start: ['int', ['int', 'string', 'int', 'pointer', this.ref.types.void]],
-            BASS_Encode_IsActive: ['int', ['int']],
-            BASS_Encode_SetNotify: ['bool', ['int', 'pointer', this.ref.types.void]],
-            BASS_Encode_SetPaused: ['bool', ['int', 'bool']],
-            BASS_Encode_Stop: ['bool', ['int']],
-            BASS_Encode_CastInit: ['bool', ['int', 'string', 'string', 'string', 'string', 'string', 'string', 'string', 'string', 'int', 'bool']],
-            BASS_Encode_CastGetStats: ['string', ['int', 'int', 'string']],
-            BASS_Encode_CastSetTitle: ['bool', ['int', 'string', 'string']]
-        });
-    } else {
-        this.basslibencoder = null;
-    }
-}
-
-Bass.prototype.BASS_Encode_SetNotify = function (handle, callback) {
-    return this.basslibencoder.BASS_Encode_SetNotify(handle, this.ffi.Callback('void', ['int', 'int', this.ref.types.void], callback), null);
-}
-
-Bass.prototype.BASS_Encode_Start = function (handle, cmdline, flags) {
-    return this.basslibencoder.BASS_Encode_Start(handle, cmdline, flags, null, this.ref.types.void);
-}
-
-Bass.prototype.BASS_Encode_IsActive = function (handle) {
-    return this.basslibencoder.BASS_Encode_IsActive(handle);
-}
-
-Bass.prototype.BASS_Encode_SetPaused = function (handle, paused) {
-    return this.basslibencoder.BASS_Encode_SetPaused(handle, paused);
-}
-
-Bass.prototype.BASS_Encode_Stop = function (handle) {
-    return this.basslibencoder.BASS_Encode_Stop(handle);
-}
-
-Bass.prototype.BASS_Encode_CastInit = function (handle, server, pass, content, name, url, genre, desc, headers, bitrate, pub) {
-    return this.basslibencoder.BASS_Encode_CastInit(handle, server, pass, content, name, url, genre, desc, headers, bitrate, pub);
-}
-
-Bass.prototype.BASS_Encode_CastGetStats = function (handle, type, pass) {
-    return this.basslibencoder.BASS_Encode_CastGetStats(handle, type, pass);
-}
-
-Bass.prototype.BASS_Encode_CastSetTitle = function (handle, title, url) {
-    if(this.basslibencoder==null){
-        this.EnableEncoder(true);
-        //   return;
-    }
-    if(handle!=null){
-        return this.basslibencoder.BASS_Encode_CastSetTitle(handle, title, url);
-    }
-    else{return false;}
-
 }
 
 Bass.prototype.getVolume = function (channel) {
